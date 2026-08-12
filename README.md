@@ -10,7 +10,7 @@
 ## GitHub Repository
 
 GitHub Repository:
-https://github.com/PhileKIRA/IS305-DWU220538.git)
+https://github.com/PhileKIRA/IS305-DWU220538.git
 
 ## Program Description
 
