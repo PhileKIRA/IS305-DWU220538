@@ -1,7 +1,7 @@
 /*
   Program: Dining Meal Booking Feature
-  Student Name: YOUR NAME
-  Student ID: YOUR STUDENT ID
+  Student Name: Philemon KIRA
+  Student ID: 220538
   Date: 17 July 2026
   Description: A JavaScript program demonstrating classes,
   objects, constructors, private fields and methods.
