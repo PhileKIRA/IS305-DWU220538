@@ -1,4 +1,5 @@
 const readline = require("node:readline/promises");
+const path = require("node:path");
 const { stdin, stdout } = require("node:process");
 
 const ServiceRequestManager = require("./managers/ServiceRequestManager");
@@ -16,14 +17,15 @@ const {
 } = require("./constants");
 
 const LINE = "=".repeat(50);
-const EXIT_OPTION = "14";
+const EXIT_OPTION = "16";
+const DATA_DIR = path.join(__dirname, "..", "data");
 
 /**
  * CampusServiceApp - the console user interface.
  *
  * Its only jobs are: show menus, read input, call the manager, print results.
- * It contains no business rules, so the same manager could later be used by
- * a different interface (or by the automated tests) without changes.
+ * It contains no business rules and NEVER reads or writes files - loading and
+ * saving are done by the manager through the repository classes.
  */
 class CampusServiceApp {
   #manager;
@@ -37,6 +39,11 @@ class CampusServiceApp {
   async run() {
     this.#rl = readline.createInterface({ input: stdin, output: stdout, terminal: false });
     this.#lines = this.#rl[Symbol.asyncIterator]();
+
+    if (!(await this.#loadData())) {
+      this.#rl.close();
+      return;
+    }
     let running = true;
 
     while (running) {
@@ -54,6 +61,7 @@ class CampusServiceApp {
         // Every invalid action ends here: show a clear message and keep the menu running.
         console.log(`\nError: ${error.message}`);
       }
+      await this.#saveData(); // saves only if something changed (including audit entries)
     }
 
     this.#rl.close();
@@ -78,6 +86,9 @@ class CampusServiceApp {
     console.log("11. Technician Menu");
     console.log("12. Filter and Sort Requests");
     console.log("13. View Request History");
+    console.log("--- Management ---");
+    console.log("14. Reports and Audit Log");
+    console.log("15. Polymorphism Demonstration");
     console.log(`${EXIT_OPTION}. Exit`);
     console.log(LINE);
   }
@@ -97,6 +108,8 @@ class CampusServiceApp {
       case "11": await this.#technicianMenu(); break;
       case "12": await this.#filterAndSort(); break;
       case "13": await this.#viewHistory(); break;
+      case "14": await this.#reportsMenu(); break;
+      case "15": this.#polymorphismDemo(); break;
       case EXIT_OPTION: return false;
       default: console.log(`\nError: Please choose a number from 1 to ${EXIT_OPTION}.`);
     }
@@ -205,6 +218,104 @@ class CampusServiceApp {
       console.log(`${status.padEnd(12)}: ${count}`);
     }
     console.log(`${"Total".padEnd(12)}: ${total}`);
+  }
+
+  // ---------- Distinction: loading and saving (through the manager) ----------
+  async #loadData() {
+    try {
+      const result = await this.#manager.load();
+      console.log(`\nLoaded ${result.users} users, ${result.requests} requests and ${result.auditEntries} audit entries.`);
+      for (const warning of result.warnings) {
+        console.log(`Warning: ${warning}`);
+      }
+      return true;
+    } catch (error) {
+      // Stop rather than continue with empty data - continuing could overwrite the files.
+      console.log(`\nError: ${error.message}`);
+      console.log("The program has stopped so that your data files are not overwritten. Please fix or restore the file and try again.");
+      return false;
+    }
+  }
+
+  async #saveData() {
+    try {
+      await this.#manager.saveChanges();
+    } catch (error) {
+      console.log(`\nError: ${error.message}`);
+      console.log("Your changes are still in memory and will be saved after your next action.");
+    }
+  }
+
+  // ---------- Distinction: reports, audit log and polymorphism ----------
+  async #reportsMenu() {
+    const viewerId = await this.#ask("\nSystem Administrator or Service Officer user ID: ");
+    this.#manager.checkCanViewReports(viewerId);
+    const choice = await this.#chooseFromList("Show", ["Management reports", "Audit log", "Back to main menu"]);
+    if (choice === "Management reports") this.#printReports(this.#manager.getManagementReports(viewerId));
+    if (choice === "Audit log") this.#printAuditLog(this.#manager.getAuditLog(viewerId));
+  }
+
+  #printReports(report) {
+    const printCounts = (title, counts) => {
+      console.log(`\n${title}`);
+      for (const [key, count] of Object.entries(counts)) console.log(`  ${key.padEnd(26)}${count}`);
+    };
+    console.log("\n================ MANAGEMENT REPORTS ================");
+    printCounts("1. Requests by status", report.byStatus);
+    printCounts("2. Requests by category", report.byCategory);
+    printCounts("3. Requests by priority", report.byPriority);
+
+    console.log(`\n4. Urgent open requests (${report.urgent.length})`);
+    report.urgent.forEach((r) => console.log(`  ${r.requestId}  score ${r.calculatePriorityScore()}  ${r.status.padEnd(12)} ${r.title}`));
+
+    console.log(`\n5. Overdue requests (${report.overdue.length})`);
+    report.overdue.forEach((row) =>
+      console.log(`  ${row.request.requestId}  open ${row.hoursOpen}h, target ${row.targetHours}h, overdue by ${row.hoursOverdue}h  ${row.request.title}`));
+
+    console.log("\n6. Requests assigned to each Technician");
+    const perTech = Object.entries(report.perTechnician);
+    if (perTech.length === 0) console.log("  (none)");
+    perTech.forEach(([id, t]) => console.log(`  ${id.padEnd(9)}${t.name.padEnd(18)}total ${t.total}, open ${t.open}`));
+
+    console.log("\n7. Completed requests by Technician");
+    const completed = Object.entries(report.completedByTechnician);
+    if (completed.length === 0) console.log("  (none)");
+    completed.forEach(([id, t]) => console.log(`  ${id.padEnd(9)}${t.name.padEnd(18)}${t.completed} completed`));
+
+    const average = report.averageResolutionHours;
+    console.log(`\n8. Average resolution time: ${average === null ? "no resolved requests yet" : `${average} hours`}`);
+
+    console.log("\n9. Request volume by campus location");
+    if (report.byLocation.length === 0) console.log("  (none)");
+    report.byLocation.forEach((row) => console.log(`  ${row.location.padEnd(26)}${row.count}`));
+  }
+
+  #printAuditLog(entries) {
+    console.log(`\n--- Audit Log (${entries.length} entries, newest last) ---`);
+    for (const e of entries) {
+      console.log(`${e.auditId}  ${e.timestamp}  ${e.actorId} (${e.actorRole})  ${e.action}  ${e.requestId ?? "-"}`);
+      console.log(`         ${e.description} → ${e.result}`);
+    }
+  }
+
+  /**
+   * POLYMORPHISM: the same three method calls are made on every request in ONE
+   * array. Each object runs its OWN class's version, so ICT, maintenance,
+   * cleaning and general requests give different scores, targets and summaries.
+   */
+  #polymorphismDemo() {
+    const requests = this.#manager.getAllRequests();
+    console.log(`\n--- Polymorphism Demonstration (${requests.length} requests in one array) ---`);
+    if (requests.length === 0) {
+      console.log("No requests yet. Submit some requests of different types first.");
+      return;
+    }
+    for (const request of requests) {
+      console.log(`\n>>> ${request.requestId}  (class: ${request.requestType})`);
+      console.log(request.getRequestSummary());
+      console.log(`calculatePriorityScore()   = ${request.calculatePriorityScore()}`);
+      console.log(`getTargetResolutionHours() = ${request.getTargetResolutionHours()}`);
+    }
   }
 
   // ---------- Credit: staff workflow menus ----------
@@ -439,7 +550,8 @@ class CampusServiceApp {
 // Start the menu only when this file is run directly (node src/CampusServiceApp.js),
 // not when it is imported by a test.
 if (require.main === module) {
-  new CampusServiceApp().run();
+  const manager = ServiceRequestManager.createWithJsonFiles(DATA_DIR);
+  new CampusServiceApp(manager).run();
 }
 
 module.exports = CampusServiceApp;
