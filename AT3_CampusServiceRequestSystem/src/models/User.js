@@ -20,7 +20,12 @@ class User {
     this.firstName = firstName; // goes through the setter -> validated
     this.lastName = lastName;
     this.email = email;
-    this.userType = userType;
+
+    // userType has no setter either: a StudentRequester must always stay a Student.
+    if (!USER_TYPES.includes(userType)) {
+      throw new Error(`Invalid user type. Choose one of: ${USER_TYPES.join(", ")}.`);
+    }
+    this.#userType = userType;
   }
 
   // ---------- Getters (read-only access) ----------
@@ -59,13 +64,6 @@ class User {
       throw new Error("Invalid email address.");
     }
     this.#email = email;
-  }
-
-  set userType(value) {
-    if (!USER_TYPES.includes(value)) {
-      throw new Error(`Invalid user type. Choose one of: ${USER_TYPES.join(", ")}.`);
-    }
-    this.#userType = value;
   }
 
   // ---------- Behaviour ----------

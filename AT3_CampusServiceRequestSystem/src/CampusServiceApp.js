@@ -1,10 +1,18 @@
 const readline = require("node:readline/promises");
 const { stdin, stdout } = require("node:process");
 
-const User = require("./models/User");
-const ServiceRequest = require("./models/ServiceRequest");
 const ServiceRequestManager = require("./managers/ServiceRequestManager");
-const { USER_TYPES, CATEGORIES, PRIORITIES } = require("./constants");
+const UserFactory = require("./factories/UserFactory");
+const ServiceRequestFactory = require("./factories/ServiceRequestFactory");
+const {
+  USER_TYPES,
+  CATEGORIES,
+  PRIORITIES,
+  YEAR_LEVELS,
+  ICT_OPTIONS,
+  MAINTENANCE_OPTIONS,
+  CLEANING_OPTIONS,
+} = require("./constants");
 
 const LINE = "=".repeat(50);
 
@@ -92,8 +100,9 @@ class CampusServiceApp {
     const lastName = await this.#ask("Last name: ");
     const email = await this.#ask("Email address: ");
     const userType = await this.#chooseFromList("User type", USER_TYPES);
+    const specialised = await this.#askUserDetails(userType);
 
-    const user = new User(userId, firstName, lastName, email, userType);
+    const user = UserFactory.createUser(userType, { userId, firstName, lastName, email }, specialised);
     this.#manager.registerUser(user);
     console.log(`\nUser registered successfully.\n${user.displayInfo()}`);
   }
@@ -101,21 +110,18 @@ class CampusServiceApp {
   async #submitRequest() {
     console.log("\n--- Submit Service Request ---");
     const requester = await this.#askForRegisteredUser();
+    const category = await this.#chooseFromList("Category", CATEGORIES);
     const title = await this.#ask("Title: ");
     const description = await this.#ask("Description: ");
     const location = await this.#ask("Campus location (e.g. Library Level 2): ");
-    const category = await this.#chooseFromList("Category", CATEGORIES);
     const priority = await this.#chooseFromList("Priority", PRIORITIES, "Normal");
+    const specialised = await this.#askRequestDetails(category);
 
-    const request = new ServiceRequest({
-      requestId: this.#manager.generateRequestId(),
-      requester,
-      title,
-      description,
-      location,
+    const request = ServiceRequestFactory.createNew(
       category,
-      priority,
-    });
+      { requestId: this.#manager.generateRequestId(), requester, title, description, location, priority },
+      specialised
+    );
     this.#manager.submitRequest(request);
     console.log(`\nRequest ${request.requestId} submitted successfully.\n`);
     console.log(request.getRequestSummary());
@@ -153,8 +159,6 @@ class CampusServiceApp {
     if (description.trim()) changes.description = description;
     const location = await this.#ask(`Location [${request.location}]: `);
     if (location.trim()) changes.location = location;
-    const category = await this.#chooseFromList(`Category [${request.category}]`, CATEGORIES, null);
-    if (category) changes.category = category;
     const priority = await this.#chooseFromList(`Priority [${request.priority}]`, PRIORITIES, null);
     if (priority) changes.priority = priority;
 
@@ -212,6 +216,55 @@ class CampusServiceApp {
     }
     console.log(`Welcome, ${user.getFullName()}.`);
     return user;
+  }
+
+  // Asks for the extra fields that each user type needs.
+  async #askUserDetails(userType) {
+    switch (userType) {
+      case "Student":
+        return {
+          programme: await this.#ask("Programme (e.g. Bachelor of Information Systems): "),
+          yearLevel: await this.#chooseFromList("Year level", YEAR_LEVELS),
+        };
+      case "Staff":
+        return { department: await this.#ask("Department: ") };
+      case "Service Officer":
+        return { serviceSection: await this.#ask("Service section (e.g. ICT Services): ") };
+      case "Technician":
+        return { technicalSpeciality: await this.#ask("Technical speciality (e.g. Networking): ") };
+      default:
+        return {};
+    }
+  }
+
+  // Asks for the extra fields that each request category needs.
+  async #askRequestDetails(category) {
+    console.log(`\n--- ${category} details ---`);
+    switch (category) {
+      case "ICT Support":
+        return {
+          deviceType: await this.#chooseFromList("Device type", ICT_OPTIONS.deviceTypes),
+          systemName: await this.#ask("System or software name (e.g. Moodle, DWU-Student Wi-Fi): "),
+          faultType: await this.#chooseFromList("Fault type", ICT_OPTIONS.faultTypes),
+          networkImpact: await this.#chooseFromList("Network impact", ICT_OPTIONS.networkImpacts),
+        };
+      case "Facilities Maintenance":
+        return {
+          building: await this.#ask("Building: "),
+          roomNumber: await this.#ask("Room number: "),
+          hazardLevel: await this.#chooseFromList("Hazard level", MAINTENANCE_OPTIONS.hazardLevels),
+          equipmentAffected: await this.#ask("Equipment affected (e.g. ceiling fan): "),
+        };
+      case "Cleaning and Sanitation":
+        return {
+          cleaningArea: await this.#ask("Cleaning area (e.g. Block B toilets): "),
+          hygieneRisk: await this.#chooseFromList("Hygiene risk", CLEANING_OPTIONS.hygieneRisks),
+          serviceType: await this.#chooseFromList("Service type", CLEANING_OPTIONS.serviceTypes),
+          preferredServiceTime: await this.#chooseFromList("Preferred service time", CLEANING_OPTIONS.serviceTimes),
+        };
+      default:
+        return { serviceNeeded: await this.#ask("Service needed (e.g. move 20 chairs to the hall): ") };
+    }
   }
 
   // Checks early (before asking for more input) that the user exists, the

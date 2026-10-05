@@ -46,11 +46,12 @@ test("T06 - only the requester can update a Submitted request; bad updates chang
     /Only the requester can update/
   );
   assert.throws(
-    () => request.updateDetails({ title: "New title", category: "Catering" }, "DWU2026001"),
-    /Unsupported category/
+    () => request.updateDetails({ title: "New title", priority: "Critical" }, "DWU2026001"),
+    /Unsupported priority/
   );
   assert.strictEqual(request.title, "Wi-Fi drops every 5 minutes"); // unchanged
   assert.throws(() => request.updateDetails({ status: "Closed" }, "DWU2026001"), /cannot be updated/);
+  assert.throws(() => request.updateDetails({ category: "Cleaning and Sanitation" }, "DWU2026001"), /cannot be updated/);
 });
 
 test("T07 - cancel Submitted request: owner only, and not twice", () => {

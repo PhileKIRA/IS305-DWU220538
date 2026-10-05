@@ -12,7 +12,7 @@ A Node.js console application that records, assigns, processes and monitors camp
 ## Achievement Components Attempted
 
 - [x] **Pass** – core service request system *(complete)*
-- [ ] **Credit** – specialised requests and role workflows
+- [ ] **Credit** – specialised requests and role workflows *(in progress: user and request inheritance complete)*
 - [ ] **Distinction** – polymorphism, JSON storage and reporting
 
 ## Features Completed (Pass)
@@ -26,18 +26,39 @@ A Node.js console application that records, assigns, processes and monitors camp
 - Request summary by status
 - Clear error messages; invalid input never crashes the menu
 
+## Features Completed (Credit – in progress)
+
+- User inheritance: `StudentRequester`, `StaffRequester`, `ServiceOfficer`, `Technician` extend `User` and call `super()`
+- Request inheritance: `ICTSupportRequest`, `MaintenanceRequest`, `CleaningRequest`, `GeneralServiceRequest` extend `ServiceRequest` and call `super(commonRequestData)`
+- Specialised fields are validated (e.g. year level 1–5, device type, hazard level, hygiene risk)
+- Overridden `getRequestSummary()`, `validateSpecialisedFields()`, `validate()` and `displayInfo()`
+- `UserFactory` and `ServiceRequestFactory` create the correct subclass from the console choices
+- User type and request category are fixed once an object is created
+
 ## Project Folder Structure
 
 ```text
 AT3_CampusServiceRequestSystem/
 ├── src/
 │   ├── CampusServiceApp.js          # Console menu (input/output only)
-│   ├── constants.js                 # Allowed categories, priorities, statuses, user types
+│   ├── constants.js                 # Allowed categories, priorities, statuses, user types, options
+│   ├── validation.js                # Shared requireText / requireOption checks
+│   ├── factories/
+│   │   ├── UserFactory.js           # Creates the correct User subclass
+│   │   └── ServiceRequestFactory.js # Creates the correct ServiceRequest subclass
 │   ├── managers/
 │   │   └── ServiceRequestManager.js # Stores users and requests in arrays; search and summaries
 │   └── models/
-│       ├── User.js                  # User class (private fields, validation)
-│       └── ServiceRequest.js        # ServiceRequest class (private fields, update/cancel rules)
+│       ├── User.js                  # Base user class (private fields, validation)
+│       ├── StudentRequester.js      # + programme, year level
+│       ├── StaffRequester.js        # + department
+│       ├── ServiceOfficer.js        # + service section
+│       ├── Technician.js            # + technical speciality
+│       ├── ServiceRequest.js        # Base request class (private fields, update/cancel rules)
+│       ├── ICTSupportRequest.js     # + device, system, fault type, network impact
+│       ├── MaintenanceRequest.js    # + building, room, hazard level, equipment
+│       ├── CleaningRequest.js       # + area, hygiene risk, service type, preferred time
+│       └── GeneralServiceRequest.js # + service needed
 ├── tests/                           # Automated tests (node:test)
 ├── docs/
 │   ├── requirements/                # Requirements document
