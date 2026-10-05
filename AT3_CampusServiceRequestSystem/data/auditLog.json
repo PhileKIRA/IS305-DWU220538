@@ -1,0 +1,422 @@
+[
+  {
+    "auditId": "AUD0001",
+    "actorId": "DWU2026001",
+    "actorRole": "Student",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Student Mary Kila",
+    "timestamp": "2026-09-27T07:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0002",
+    "actorId": "DWU2026014",
+    "actorRole": "Student",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Student John Waim",
+    "timestamp": "2026-09-27T08:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0003",
+    "actorId": "DWU2026027",
+    "actorRole": "Student",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Student Grace Pondros",
+    "timestamp": "2026-09-27T09:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0004",
+    "actorId": "STF101",
+    "actorRole": "Staff",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Staff Peter Sale",
+    "timestamp": "2026-09-27T10:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0005",
+    "actorId": "STF102",
+    "actorRole": "Staff",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Staff Ruth Kaupa",
+    "timestamp": "2026-09-27T11:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0006",
+    "actorId": "OFF001",
+    "actorRole": "Service Officer",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Service Officer Paul Agi",
+    "timestamp": "2026-09-27T12:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0007",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Service Officer Helen Tamb",
+    "timestamp": "2026-09-27T13:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0008",
+    "actorId": "TECH001",
+    "actorRole": "Technician",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Technician Ken Bais",
+    "timestamp": "2026-09-27T14:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0009",
+    "actorId": "TECH002",
+    "actorRole": "Technician",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Technician Rose Lai",
+    "timestamp": "2026-09-27T15:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0010",
+    "actorId": "TECH003",
+    "actorRole": "Technician",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered Technician Michael Yawa",
+    "timestamp": "2026-09-27T16:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0011",
+    "actorId": "ADM001",
+    "actorRole": "System Administrator",
+    "action": "User registration",
+    "requestId": null,
+    "description": "Registered System Administrator Ann Mek",
+    "timestamp": "2026-09-27T17:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0012",
+    "actorId": "DWU2026014",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ002",
+    "description": "Request submitted",
+    "timestamp": "2026-09-30T15:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0013",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ002",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-09-30T17:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0014",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Technician assignment",
+    "requestId": "REQ002",
+    "description": "Status changed from Reviewed to Assigned",
+    "timestamp": "2026-09-30T19:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0015",
+    "actorId": "TECH002",
+    "actorRole": "Technician",
+    "action": "Status change (begin work)",
+    "requestId": "REQ002",
+    "description": "Status changed from Assigned to In Progress",
+    "timestamp": "2026-10-01T11:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0016",
+    "actorId": "TECH002",
+    "actorRole": "Technician",
+    "action": "Request resolution",
+    "requestId": "REQ002",
+    "description": "Status changed from In Progress to Resolved",
+    "timestamp": "2026-10-01T17:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0017",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Request closure",
+    "requestId": "REQ002",
+    "description": "Status changed from Resolved to Closed",
+    "timestamp": "2026-10-01T21:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0018",
+    "actorId": "DWU2026001",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ007",
+    "description": "Request submitted",
+    "timestamp": "2026-10-02T15:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0019",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ007",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-10-02T16:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0020",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Technician assignment",
+    "requestId": "REQ007",
+    "description": "Status changed from Reviewed to Assigned",
+    "timestamp": "2026-10-02T17:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0021",
+    "actorId": "TECH003",
+    "actorRole": "Technician",
+    "action": "Status change (begin work)",
+    "requestId": "REQ007",
+    "description": "Status changed from Assigned to In Progress",
+    "timestamp": "2026-10-02T18:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0022",
+    "actorId": "TECH003",
+    "actorRole": "Technician",
+    "action": "Request resolution",
+    "requestId": "REQ007",
+    "description": "Status changed from In Progress to Resolved",
+    "timestamp": "2026-10-02T20:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0023",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Request closure",
+    "requestId": "REQ007",
+    "description": "Status changed from Resolved to Closed",
+    "timestamp": "2026-10-02T23:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0024",
+    "actorId": "DWU2026027",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ009",
+    "description": "Request submitted",
+    "timestamp": "2026-10-03T03:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0025",
+    "actorId": "DWU2026014",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ008",
+    "description": "Request submitted",
+    "timestamp": "2026-10-03T13:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0026",
+    "actorId": "DWU2026014",
+    "actorRole": "Student",
+    "action": "Request cancellation",
+    "requestId": "REQ008",
+    "description": "Status changed from Submitted to Cancelled",
+    "timestamp": "2026-10-03T14:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0027",
+    "actorId": "STF101",
+    "actorRole": "Staff",
+    "action": "Request creation",
+    "requestId": "REQ004",
+    "description": "Request submitted",
+    "timestamp": "2026-10-04T09:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0028",
+    "actorId": "OFF001",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ004",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-10-04T09:27:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0029",
+    "actorId": "OFF001",
+    "actorRole": "Service Officer",
+    "action": "Technician assignment",
+    "requestId": "REQ004",
+    "description": "Status changed from Reviewed to Assigned",
+    "timestamp": "2026-10-04T09:42:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0030",
+    "actorId": "TECH001",
+    "actorRole": "Technician",
+    "action": "Status change (begin work)",
+    "requestId": "REQ004",
+    "description": "Status changed from Assigned to In Progress",
+    "timestamp": "2026-10-04T09:57:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0031",
+    "actorId": "TECH001",
+    "actorRole": "Technician",
+    "action": "Request resolution",
+    "requestId": "REQ004",
+    "description": "Status changed from In Progress to Resolved",
+    "timestamp": "2026-10-04T12:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0032",
+    "actorId": "STF102",
+    "actorRole": "Staff",
+    "action": "Request creation",
+    "requestId": "REQ003",
+    "description": "Request submitted",
+    "timestamp": "2026-10-05T06:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0033",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ003",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-10-05T06:42:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0034",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Technician assignment",
+    "requestId": "REQ003",
+    "description": "Status changed from Reviewed to Assigned",
+    "timestamp": "2026-10-05T07:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0035",
+    "actorId": "TECH003",
+    "actorRole": "Technician",
+    "action": "Status change (begin work)",
+    "requestId": "REQ003",
+    "description": "Status changed from Assigned to In Progress",
+    "timestamp": "2026-10-05T08:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0036",
+    "actorId": "DWU2026027",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ005",
+    "description": "Request submitted",
+    "timestamp": "2026-10-05T08:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0037",
+    "actorId": "TECH003",
+    "actorRole": "Technician",
+    "action": "Progress update",
+    "requestId": "REQ003",
+    "description": "Plumber called for the second toilet",
+    "timestamp": "2026-10-05T08:42:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0038",
+    "actorId": "DWU2026001",
+    "actorRole": "Student",
+    "action": "Request creation",
+    "requestId": "REQ001",
+    "description": "Request submitted",
+    "timestamp": "2026-10-05T09:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0039",
+    "actorId": "OFF002",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ005",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-10-05T09:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0040",
+    "actorId": "OFF001",
+    "actorRole": "Service Officer",
+    "action": "Status change (review)",
+    "requestId": "REQ001",
+    "description": "Status changed from Submitted to Reviewed",
+    "timestamp": "2026-10-05T10:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0041",
+    "actorId": "OFF001",
+    "actorRole": "Service Officer",
+    "action": "Technician assignment",
+    "requestId": "REQ001",
+    "description": "Status changed from Reviewed to Assigned",
+    "timestamp": "2026-10-05T11:12:44.178Z",
+    "result": "Success"
+  },
+  {
+    "auditId": "AUD0042",
+    "actorId": "STF101",
+    "actorRole": "Staff",
+    "action": "Request creation",
+    "requestId": "REQ006",
+    "description": "Request submitted",
+    "timestamp": "2026-10-05T13:12:44.178Z",
+    "result": "Success"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "userId": "DWU2026001",
+    "firstName": "Mary",
+    "lastName": "Kila",
+    "email": "mary.kila@students.dwu.example",
+    "userType": "Student",
+    "programme": "Bachelor of Information Systems",
+    "yearLevel": 3
+  },
+  {
+    "userId": "DWU2026014",
+    "firstName": "John",
+    "lastName": "Waim",
+    "email": "john.waim@students.dwu.example",
+    "userType": "Student",
+    "programme": "Bachelor of Business Studies",
+    "yearLevel": 2
+  },
+  {
+    "userId": "DWU2026027",
+    "firstName": "Grace",
+    "lastName": "Pondros",
+    "email": "grace.pondros@students.dwu.example",
+    "userType": "Student",
+    "programme": "Bachelor of Health Science",
+    "yearLevel": 1
+  },
+  {
+    "userId": "STF101",
+    "firstName": "Peter",
+    "lastName": "Sale",
+    "email": "peter.sale@staff.dwu.example",
+    "userType": "Staff",
+    "department": "Information Systems"
+  },
+  {
+    "userId": "STF102",
+    "firstName": "Ruth",
+    "lastName": "Kaupa",
+    "email": "ruth.kaupa@staff.dwu.example",
+    "userType": "Staff",
+    "department": "Library Services"
+  },
+  {
+    "userId": "OFF001",
+    "firstName": "Paul",
+    "lastName": "Agi",
+    "email": "paul.agi@staff.dwu.example",
+    "userType": "Service Officer",
+    "serviceSection": "ICT Services"
+  },
+  {
+    "userId": "OFF002",
+    "firstName": "Helen",
+    "lastName": "Tamb",
+    "email": "helen.tamb@staff.dwu.example",
+    "userType": "Service Officer",
+    "serviceSection": "Facilities and Estates"
+  },
+  {
+    "userId": "TECH001",
+    "firstName": "Ken",
+    "lastName": "Bais",
+    "email": "ken.bais@staff.dwu.example",
+    "userType": "Technician",
+    "technicalSpeciality": "Networking"
+  },
+  {
+    "userId": "TECH002",
+    "firstName": "Rose",
+    "lastName": "Lai",
+    "email": "rose.lai@staff.dwu.example",
+    "userType": "Technician",
+    "technicalSpeciality": "Electrical and Plumbing"
+  },
+  {
+    "userId": "TECH003",
+    "firstName": "Michael",
+    "lastName": "Yawa",
+    "email": "michael.yawa@staff.dwu.example",
+    "userType": "Technician",
+    "technicalSpeciality": "Cleaning and Sanitation"
+  },
+  {
+    "userId": "ADM001",
+    "firstName": "Ann",
+    "lastName": "Mek",
+    "email": "ann.mek@staff.dwu.example",
+    "userType": "System Administrator"
+  }
+]

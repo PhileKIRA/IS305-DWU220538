@@ -5,7 +5,8 @@
   "main": "src/CampusServiceApp.js",
   "scripts": {
     "start": "node src/CampusServiceApp.js",
-    "test": "node --test"
+    "test": "node --test",
+    "seed": "node scripts/seedData.js"
   },
   "engines": {
     "node": ">=20"
