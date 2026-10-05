@@ -24,6 +24,7 @@ classDiagram
         -String #dateUpdated
         +constructor(data)
         +isOwnedBy(userId) Boolean
+        +checkCanModify(userId, action)
         +validate() Boolean
         +updateDetails(changes, userId)
         +cancelRequest(userId)
@@ -33,6 +34,8 @@ classDiagram
         -User[] #users
         -ServiceRequest[] #requests
         +registerUser(user)
+        +getAllUsers() User[]
+        +generateRequestId() String
         +findUserById(userId) User
         +submitRequest(request)
         +findRequestById(requestId) ServiceRequest
@@ -44,6 +47,7 @@ classDiagram
         +getRequestSummaryByStatus() Object
     }
     class CampusServiceApp {
+        -ServiceRequestManager #manager
         +run()
     }
     CampusServiceApp --> ServiceRequestManager : uses
