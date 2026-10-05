@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor R as Requester
+    participant App as CampusServiceApp
+    participant M as ServiceRequestManager
+    participant SR as ServiceRequest
+    R->>App: Choose "2. Submit Service Request"
+    App->>R: Ask for user ID
+    R->>App: Enter user ID
+    App->>M: findUserById(userId)
+    alt user not found
+        M-->>App: undefined
+        App-->>R: "Error: User not found."
+    else user found
+        M-->>App: User
+        App->>R: Ask for title, description, location, category, priority
+        R->>App: Enter request details
+        App->>M: generateRequestId()
+        M-->>App: "REQ001"
+        App->>SR: new ServiceRequest(data)
+        alt invalid details
+            SR-->>App: throws Error
+            App-->>R: "Error: Unsupported category." (example)
+        else valid
+            SR-->>App: request (status = Submitted)
+            App->>M: submitRequest(request)
+            M->>M: check duplicate request ID
+            M->>M: requests.push(request)
+            M-->>App: request
+            App-->>R: "Request REQ001 submitted."
+        end
+    end

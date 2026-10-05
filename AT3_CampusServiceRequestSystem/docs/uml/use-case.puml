@@ -1,0 +1,57 @@
+@startuml use-case
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #EEF3FB
+skinparam usecaseBorderColor #1F4E79
+
+actor "Requester" as Req
+actor "Student Requester" as Stu
+actor "Staff Requester" as Staff
+actor "Service Officer" as Off
+actor "Technician" as Tech
+actor "System Administrator" as Admin
+Stu -|> Req
+Staff -|> Req
+
+rectangle "Campus Service Request Management System" {
+  usecase "Register user" as UC1
+  usecase "Submit request" as UC2
+  usecase "View requests" as UC3
+  usecase "Update own\nSubmitted request" as UC4
+  usecase "Cancel own\nSubmitted request" as UC5
+  usecase "Search, filter\nand sort requests" as UC6
+  usecase "Review request" as UC7
+  usecase "Set priority" as UC8
+  usecase "Assign Technician" as UC9
+  usecase "Verify and\nclose request" as UC10
+  usecase "Begin work" as UC11
+  usecase "Add progress note" as UC12
+  usecase "Resolve request" as UC13
+  usecase "View request history" as UC14
+  usecase "View audit log" as UC15
+  usecase "Generate reports" as UC16
+}
+
+Req --> UC1
+Req --> UC2
+Req --> UC3
+Req --> UC4
+Req --> UC5
+Req --> UC6
+
+UC7 <-- Off
+UC8 <-- Off
+UC9 <-- Off
+UC10 <-- Off
+UC14 <-- Off
+UC16 <-- Off
+
+UC11 <-- Tech
+UC12 <-- Tech
+UC13 <-- Tech
+UC3 <-- Tech
+
+UC14 <-- Admin
+UC15 <-- Admin
+UC16 <-- Admin
+@enduml
