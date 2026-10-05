@@ -2,6 +2,9 @@ const ServiceRequest = require("./ServiceRequest");
 const { MAINTENANCE_OPTIONS } = require("../constants");
 const { requireText, requireOption } = require("../validation");
 
+// Extra priority points for safety risk.
+const HAZARD_POINTS = { Low: 0, Medium: 10, High: 25 };
+
 /** MaintenanceRequest - damaged buildings, furniture, plumbing, electrical, etc. */
 class MaintenanceRequest extends ServiceRequest {
   #building;
@@ -38,6 +41,17 @@ class MaintenanceRequest extends ServiceRequest {
     requireOption(this.#hazardLevel, MAINTENANCE_OPTIONS.hazardLevels, "Hazard level");
     requireText(this.#equipmentAffected, "Equipment affected");
     return true;
+  }
+
+  /** Safety hazards (e.g. exposed wiring) score higher. */
+  calculatePriorityScore() {
+    return this.getBasePriorityScore() + HAZARD_POINTS[this.#hazardLevel];
+  }
+
+  /** A high hazard must be made safe within 4 hours, whatever its priority. */
+  getTargetResolutionHours() {
+    if (this.#hazardLevel === "High") return Math.min(this.getBaseTargetHours(), 4);
+    return this.getBaseTargetHours();
   }
 
   getRequestSummary() {

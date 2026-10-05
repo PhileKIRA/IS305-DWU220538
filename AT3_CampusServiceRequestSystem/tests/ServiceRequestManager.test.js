@@ -102,5 +102,8 @@ test("T16 - search by request ID or title, and summary by status", () => {
   assert.deepStrictEqual(manager.searchRequests("req002").map((r) => r.requestId), ["REQ002"]);
   assert.throws(() => manager.searchRequests("  "), /enter a request ID or title/);
 
-  assert.deepStrictEqual(manager.getRequestSummaryByStatus(), { Submitted: 1, Cancelled: 1 });
+  const summary = manager.getRequestSummaryByStatus();
+  assert.strictEqual(summary.Submitted, 1);
+  assert.strictEqual(summary.Cancelled, 1);
+  assert.strictEqual(summary.Closed, 0); // every status is listed, even with no requests
 });

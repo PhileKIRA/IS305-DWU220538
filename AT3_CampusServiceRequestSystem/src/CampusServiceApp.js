@@ -8,6 +8,7 @@ const {
   USER_TYPES,
   CATEGORIES,
   PRIORITIES,
+  STATUS,
   YEAR_LEVELS,
   ICT_OPTIONS,
   MAINTENANCE_OPTIONS,
@@ -15,6 +16,7 @@ const {
 } = require("./constants");
 
 const LINE = "=".repeat(50);
+const EXIT_OPTION = "14";
 
 /**
  * CampusServiceApp - the console user interface.
@@ -41,7 +43,7 @@ class CampusServiceApp {
       this.#showMenu();
       let choice;
       try {
-        choice = (await this.#ask("Choose an option (1-10): ")).trim();
+        choice = (await this.#ask(`Choose an option (1-${EXIT_OPTION}): `)).trim();
       } catch {
         break; // input stream closed (e.g. Ctrl+C or end of piped input)
       }
@@ -71,7 +73,12 @@ class CampusServiceApp {
     console.log("7. Cancel My Request");
     console.log("8. Search Requests");
     console.log("9. View Request Summary");
-    console.log("10. Exit");
+    console.log("--- Staff workflow ---");
+    console.log("10. Service Officer Menu");
+    console.log("11. Technician Menu");
+    console.log("12. Filter and Sort Requests");
+    console.log("13. View Request History");
+    console.log(`${EXIT_OPTION}. Exit`);
     console.log(LINE);
   }
 
@@ -86,8 +93,12 @@ class CampusServiceApp {
       case "7": await this.#cancelMyRequest(); break;
       case "8": await this.#searchRequests(); break;
       case "9": this.#viewSummary(); break;
-      case "10": return false;
-      default: console.log("\nError: Please choose a number from 1 to 10.");
+      case "10": await this.#serviceOfficerMenu(); break;
+      case "11": await this.#technicianMenu(); break;
+      case "12": await this.#filterAndSort(); break;
+      case "13": await this.#viewHistory(); break;
+      case EXIT_OPTION: return false;
+      default: console.log(`\nError: Please choose a number from 1 to ${EXIT_OPTION}.`);
     }
     return true;
   }
@@ -194,6 +205,111 @@ class CampusServiceApp {
       console.log(`${status.padEnd(12)}: ${count}`);
     }
     console.log(`${"Total".padEnd(12)}: ${total}`);
+  }
+
+  // ---------- Credit: staff workflow menus ----------
+  async #serviceOfficerMenu() {
+    const officerId = await this.#ask("\nService Officer user ID: ");
+    const options = [
+      "Review a Submitted request",
+      "Set request priority",
+      "Assign a Technician",
+      "Verify and close a Resolved request",
+      "View requests waiting for action",
+      "Back to main menu",
+    ];
+    const action = await this.#chooseFromList("Service Officer actions", options);
+
+    if (action === options[4]) {
+      this.#printRequestList(this.#manager.filterRequests({ status: "Submitted" }), "Submitted (waiting for review)");
+      this.#printRequestList(this.#manager.filterRequests({ status: "Reviewed" }), "Reviewed (waiting for assignment)");
+      this.#printRequestList(this.#manager.filterRequests({ status: "Resolved" }), "Resolved (waiting for closure)");
+      return;
+    }
+    if (action === options[5]) return;
+
+    const requestId = await this.#ask("Request ID: ");
+    let request;
+    if (action === options[0]) {
+      const comment = await this.#ask("Review comment (Enter to skip): ");
+      request = this.#manager.reviewRequest(requestId, officerId, comment.trim() || undefined);
+    } else if (action === options[1]) {
+      const priority = await this.#chooseFromList("New priority", PRIORITIES);
+      request = this.#manager.setRequestPriority(requestId, officerId, priority);
+    } else if (action === options[2]) {
+      this.#printTechnicians();
+      const technicianId = await this.#ask("Technician user ID: ");
+      request = this.#manager.assignTechnician(requestId, officerId, technicianId);
+    } else {
+      const comment = await this.#ask("Verification comment (Enter to skip): ");
+      request = this.#manager.closeRequest(requestId, officerId, comment.trim() || undefined);
+    }
+    console.log(`\nDone. ${request.requestId} is now ${request.status} (priority ${request.priority}).`);
+  }
+
+  async #technicianMenu() {
+    const technicianId = await this.#ask("\nTechnician user ID: ");
+    const options = ["View my assigned requests", "Begin work", "Add progress note", "Resolve request", "Back to main menu"];
+    const action = await this.#chooseFromList("Technician actions", options);
+
+    if (action === options[0]) {
+      this.#printRequestList(this.#manager.getRequestsByTechnician(technicianId), `Requests assigned to ${technicianId.trim()}`);
+      return;
+    }
+    if (action === options[4]) return;
+
+    const requestId = await this.#ask("Request ID: ");
+    let request;
+    if (action === options[1]) {
+      request = this.#manager.beginWork(requestId, technicianId);
+    } else if (action === options[2]) {
+      const note = await this.#ask("Progress note: ");
+      request = this.#manager.addProgressNote(requestId, technicianId, note);
+    } else {
+      const comment = await this.#ask("Resolution comment (Enter to skip): ");
+      request = this.#manager.resolveRequest(requestId, technicianId, comment.trim() || undefined);
+    }
+    console.log(`\nDone. ${request.requestId} is now ${request.status}.`);
+  }
+
+  async #filterAndSort() {
+    console.log("\n--- Filter and Sort Requests ---");
+    const filterBy = await this.#chooseFromList("Filter by", ["No filter (all requests)", "Category", "Status", "Priority", "Assigned Technician"]);
+    const criteria = {};
+    if (filterBy === "Category") criteria.category = await this.#chooseFromList("Category", CATEGORIES);
+    if (filterBy === "Status") criteria.status = await this.#chooseFromList("Status", Object.values(STATUS));
+    if (filterBy === "Priority") criteria.priority = await this.#chooseFromList("Priority", PRIORITIES);
+    if (filterBy === "Assigned Technician") {
+      this.#printTechnicians();
+      criteria.technicianId = await this.#ask("Technician user ID: ");
+    }
+
+    const sortChoices = {
+      "Date submitted (oldest first)": "date",
+      "Date submitted (newest first)": "date-desc",
+      "Priority (most urgent first)": "priority",
+    };
+    const sortLabel = await this.#chooseFromList("Sort by", Object.keys(sortChoices));
+    const results = this.#manager.sortRequests(this.#manager.filterRequests(criteria), sortChoices[sortLabel]);
+    this.#printRequestList(results, `${filterBy}, sorted by ${sortLabel.toLowerCase()}`);
+  }
+
+  async #viewHistory() {
+    const requestId = await this.#ask("\nRequest ID: ");
+    const history = this.#manager.getRequestHistory(requestId);
+    console.log(`\n--- History for ${requestId.trim().toUpperCase()} (${history.length} entries) ---`);
+    history.forEach((entry, index) => {
+      const change = entry.previousStatus ? `${entry.previousStatus} → ${entry.newStatus}` : entry.newStatus;
+      console.log(`${index + 1}. ${entry.timestamp}  ${entry.action}  [${change}]`);
+      console.log(`   by ${entry.actorId} (${entry.actorRole}): ${entry.comment}`);
+    });
+  }
+
+  #printTechnicians() {
+    const technicians = this.#manager.getAllUsers().filter((user) => user.userType === "Technician");
+    console.log("Registered Technicians:");
+    if (technicians.length === 0) console.log("  (none - register a Technician first)");
+    technicians.forEach((t) => console.log(`  ${t.userId} - ${t.getFullName()} (${t.technicalSpeciality})`));
   }
 
   // ---------- Input/output helpers ----------
@@ -309,9 +425,13 @@ class CampusServiceApp {
       console.log("No requests found.");
       return;
     }
-    console.log(`${"ID".padEnd(8)}${"Status".padEnd(12)}${"Priority".padEnd(10)}${"Category".padEnd(26)}Title`);
+    console.log(`${"ID".padEnd(8)}${"Status".padEnd(13)}${"Priority".padEnd(10)}${"Score".padEnd(7)}${"Category".padEnd(25)}${"Technician".padEnd(12)}Title`);
     for (const r of requests) {
-      console.log(`${r.requestId.padEnd(8)}${r.status.padEnd(12)}${r.priority.padEnd(10)}${r.category.padEnd(26)}${r.title}`);
+      const tech = r.assignedTechnician ? r.assignedTechnician.userId : "-";
+      console.log(
+        `${r.requestId.padEnd(8)}${r.status.padEnd(13)}${r.priority.padEnd(10)}${String(r.calculatePriorityScore()).padEnd(7)}` +
+        `${r.category.padEnd(25)}${tech.padEnd(12)}${r.title}`
+      );
     }
   }
 }

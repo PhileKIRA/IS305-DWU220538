@@ -1,5 +1,14 @@
 const User = require("./User");
-const { CATEGORIES, PRIORITIES, STATUS } = require("../constants");
+const ServiceOfficer = require("./ServiceOfficer");
+const Technician = require("./Technician");
+const {
+  CATEGORIES,
+  PRIORITIES,
+  STATUS,
+  VALID_TRANSITIONS,
+  PRIORITY_POINTS,
+  BASE_TARGET_HOURS,
+} = require("../constants");
 const { requireText } = require("../validation");
 
 /**
@@ -8,10 +17,11 @@ const { requireText } = require("../validation");
  * GeneralServiceRequest.
  *
  * Encapsulation: all fields are private. Status can NOT be set from outside;
- * it only changes through controlled methods such as cancelRequest().
+ * it only changes through workflow methods (review, assignTechnician, ...),
+ * which all go through #changeStatus() and the VALID_TRANSITIONS table.
  *
- * Association: a request holds a reference to the User object who submitted
- * it (#requester), not just their ID.
+ * Association: a request refers to its requester and assigned Technician objects.
+ * Composition: a request owns its #history entries.
  */
 class ServiceRequest {
   #requestId;
@@ -24,6 +34,8 @@ class ServiceRequest {
   #status;
   #dateSubmitted;
   #dateUpdated;
+  #assignedTechnician = null;
+  #history = [];
 
   /**
    * @param {object} data - common request data:
@@ -51,6 +63,7 @@ class ServiceRequest {
     this.#status = STATUS.SUBMITTED; // default status required by the spec
     this.#dateSubmitted = new Date().toISOString();
     this.#dateUpdated = this.#dateSubmitted;
+    this.#addHistory(null, STATUS.SUBMITTED, "Submit request", this.#requester, "Request submitted");
   }
 
   // ---------- Getters ----------
@@ -64,12 +77,17 @@ class ServiceRequest {
   get status() { return this.#status; }
   get dateSubmitted() { return this.#dateSubmitted; }
   get dateUpdated() { return this.#dateUpdated; }
+  get assignedTechnician() { return this.#assignedTechnician; }
+
+  /** A copy of the history, so callers cannot add or change entries. */
+  get history() { return this.#history.map((entry) => ({ ...entry })); }
 
   /** The class name, e.g. "ICTSupportRequest" - shown in summaries. */
   get requestType() { return this.constructor.name; }
 
   // ---------- Controlled setters ----------
-  // There is deliberately NO setter for requestId, requester, category, status or dates.
+  // There is deliberately NO setter for requestId, requester, category, status,
+  // dates, assignedTechnician or history.
   set title(value) {
     this.#title = requireText(value, "Request title");
   }
@@ -89,9 +107,13 @@ class ServiceRequest {
     this.#priority = value;
   }
 
-  // ---------- Behaviour ----------
+  // ---------- Validation ----------
   isOwnedBy(userId) {
     return this.#requester.userId === userId;
+  }
+
+  isAssignedTo(userId) {
+    return this.#assignedTechnician !== null && this.#assignedTechnician.userId === userId;
   }
 
   validate() {
@@ -110,10 +132,10 @@ class ServiceRequest {
     return true;
   }
 
+  // ---------- Requester actions (Pass) ----------
   /**
-   * The one place that decides whether a user may change this request.
+   * The one place that decides whether a requester may change this request.
    * action is "update" or "cancel". Throws a clear error if not allowed.
-   * The console calls this early so users are not asked for details first.
    */
   checkCanModify(userId, action) {
     if (!this.isOwnedBy(userId)) {
@@ -169,12 +191,88 @@ class ServiceRequest {
 
   cancelRequest(userId) {
     this.checkCanModify(userId, "cancel");
-    this.#status = STATUS.CANCELLED;
+    this.#changeStatus(STATUS.CANCELLED, "Cancel request", this.#requester, "Cancelled by requester");
+  }
+
+  // ---------- Service Officer actions (Credit) ----------
+  review(officer, comment = "Request reviewed") {
+    ServiceRequest.#requireOfficer(officer, "review requests");
+    this.#changeStatus(STATUS.REVIEWED, "Review request", officer, comment);
+  }
+
+  setPriority(officer, newPriority, comment = "") {
+    ServiceRequest.#requireOfficer(officer, "set the priority");
+    if (![STATUS.REVIEWED, STATUS.ASSIGNED].includes(this.#status)) {
+      throw new Error(`Priority can only be set on Reviewed or Assigned requests (current status: ${this.#status}).`);
+    }
+    const oldPriority = this.#priority;
+    this.priority = newPriority; // setter validates
+    this.#addHistory(this.#status, this.#status, "Set priority", officer,
+      comment || `Priority changed from ${oldPriority} to ${newPriority}`);
     this.#touch();
   }
 
+  assignTechnician(officer, technician, comment = "") {
+    ServiceRequest.#requireOfficer(officer, "assign a Technician");
+    if (!(technician instanceof Technician)) {
+      throw new Error("Requests can only be assigned to a registered Technician.");
+    }
+    this.#checkTransition(STATUS.ASSIGNED); // check BEFORE changing the technician
+    this.#assignedTechnician = technician;
+    this.#changeStatus(STATUS.ASSIGNED, "Assign Technician", officer,
+      comment || `Assigned to ${technician.getFullName()} (${technician.userId})`);
+  }
+
+  close(officer, comment = "Work verified and request closed") {
+    ServiceRequest.#requireOfficer(officer, "close requests");
+    this.#changeStatus(STATUS.CLOSED, "Close request", officer, comment);
+  }
+
+  // ---------- Technician actions (Credit) ----------
+  beginWork(technician, comment = "Work started") {
+    this.#requireAssignedTechnician(technician, "start work on");
+    this.#changeStatus(STATUS.IN_PROGRESS, "Begin work", technician, comment);
+  }
+
+  addProgressNote(technician, note) {
+    this.#requireAssignedTechnician(technician, "add progress notes to");
+    if (this.#status !== STATUS.IN_PROGRESS) {
+      throw new Error(`Progress notes can only be added while work is In Progress (current status: ${this.#status}).`);
+    }
+    this.#addHistory(this.#status, this.#status, "Progress update", technician, requireText(note, "Progress note"));
+    this.#touch();
+  }
+
+  resolve(technician, comment = "Work completed") {
+    this.#requireAssignedTechnician(technician, "resolve");
+    this.#changeStatus(STATUS.RESOLVED, "Resolve request", technician, comment);
+  }
+
+  // ---------- Priority and target time (overridden by subclasses) ----------
+  /** Points for the priority level only. Subclasses add points for their own risks. */
+  getBasePriorityScore() {
+    return PRIORITY_POINTS[this.#priority];
+  }
+
+  /** Hours allowed for the priority level only. Subclasses can shorten this. */
+  getBaseTargetHours() {
+    return BASE_TARGET_HOURS[this.#priority];
+  }
+
+  calculatePriorityScore() {
+    return this.getBasePriorityScore();
+  }
+
+  getTargetResolutionHours() {
+    return this.getBaseTargetHours();
+  }
+
+  // ---------- Summaries ----------
   /** Common summary lines. Subclasses add their own details after these. */
   getBaseSummary() {
+    const technician = this.#assignedTechnician
+      ? `${this.#assignedTechnician.getFullName()} (${this.#assignedTechnician.userId})`
+      : "Not assigned";
     return [
       `Request ID : ${this.#requestId}`,
       `Type       : ${this.requestType}`,
@@ -182,8 +280,9 @@ class ServiceRequest {
       `Requester  : ${this.#requester.getFullName()} (${this.#requester.userId})`,
       `Category   : ${this.#category}`,
       `Location   : ${this.#location}`,
-      `Priority   : ${this.#priority}`,
+      `Priority   : ${this.#priority} (score ${this.calculatePriorityScore()}, target ${this.getTargetResolutionHours()} hours)`,
       `Status     : ${this.#status}`,
+      `Technician : ${technician}`,
       `Submitted  : ${this.#dateSubmitted}`,
       `Updated    : ${this.#dateUpdated}`,
       `Details    : ${this.#description}`,
@@ -195,6 +294,47 @@ class ServiceRequest {
   }
 
   // ---------- Private helpers ----------
+  /** Throws if moving from the current status to newStatus is not allowed. */
+  #checkTransition(newStatus) {
+    const allowed = VALID_TRANSITIONS[this.#status] ?? [];
+    if (!allowed.includes(newStatus)) {
+      throw new Error(`Invalid status change: ${this.#status} → ${newStatus} is not allowed.`);
+    }
+  }
+
+  /** The ONLY place the status changes. Every change is checked and recorded. */
+  #changeStatus(newStatus, action, actor, comment) {
+    this.#checkTransition(newStatus);
+    const previousStatus = this.#status;
+    this.#status = newStatus;
+    this.#addHistory(previousStatus, newStatus, action, actor, comment);
+    this.#touch();
+  }
+
+  #addHistory(previousStatus, newStatus, action, actor, comment) {
+    this.#history.push({
+      previousStatus,
+      newStatus,
+      action,
+      actorId: actor.userId,
+      actorRole: actor.userType,
+      comment,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  #requireAssignedTechnician(technician, actionText) {
+    if (!(technician instanceof Technician) || !this.isAssignedTo(technician.userId)) {
+      throw new Error(`Only the assigned Technician can ${actionText} this request.`);
+    }
+  }
+
+  static #requireOfficer(user, actionText) {
+    if (!(user instanceof ServiceOfficer)) {
+      throw new Error(`Only a Service Officer can ${actionText}.`);
+    }
+  }
+
   #touch() {
     this.#dateUpdated = new Date().toISOString();
   }

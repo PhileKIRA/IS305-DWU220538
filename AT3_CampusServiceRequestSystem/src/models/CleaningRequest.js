@@ -2,6 +2,9 @@ const ServiceRequest = require("./ServiceRequest");
 const { CLEANING_OPTIONS } = require("../constants");
 const { requireText, requireOption } = require("../validation");
 
+// Extra priority points for health risk.
+const HYGIENE_POINTS = { Low: 0, Medium: 5, High: 15 };
+
 /** CleaningRequest - cleaning and sanitation of campus areas. */
 class CleaningRequest extends ServiceRequest {
   #cleaningArea;
@@ -40,6 +43,17 @@ class CleaningRequest extends ServiceRequest {
     requireOption(this.#serviceType, CLEANING_OPTIONS.serviceTypes, "Service type");
     requireOption(this.#preferredServiceTime, CLEANING_OPTIONS.serviceTimes, "Preferred service time");
     return true;
+  }
+
+  /** Hygiene risks (e.g. blocked toilets) score higher. */
+  calculatePriorityScore() {
+    return this.getBasePriorityScore() + HYGIENE_POINTS[this.#hygieneRisk];
+  }
+
+  /** A high hygiene risk must be cleaned within 6 hours. */
+  getTargetResolutionHours() {
+    if (this.#hygieneRisk === "High") return Math.min(this.getBaseTargetHours(), 6);
+    return this.getBaseTargetHours();
   }
 
   getRequestSummary() {

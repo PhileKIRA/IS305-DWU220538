@@ -1,11 +1,11 @@
 const User = require("../models/User");
 const ServiceRequest = require("../models/ServiceRequest");
-const { STATUS } = require("../constants");
+const { STATUS, PRIORITIES } = require("../constants");
 
 /**
  * ServiceRequestManager - stores and manages all users and requests.
  *
- * Pass stage: everything is kept in two JavaScript arrays.
+ * Everything is kept in two JavaScript arrays.
  * The manager holds the business rules that involve MORE than one object
  * (duplicate IDs, finding records, searching, summaries). Rules about a single
  * request (who may update or cancel it) live inside ServiceRequest itself.
@@ -107,7 +107,105 @@ class ServiceRequestManager {
     );
   }
 
-  /** Returns e.g. { Submitted: 3, Cancelled: 1 } - every status is listed, even when 0. */
+  // ---------- Workflow actions (Credit) ----------
+  // Each method finds the objects by ID, then asks the request to perform the
+  // action. The request itself checks the role and the status transition.
+  reviewRequest(requestId, officerId, comment) {
+    const request = this.#getExistingRequest(requestId);
+    request.review(this.#getExistingUser(officerId), comment);
+    return request;
+  }
+
+  setRequestPriority(requestId, officerId, priority, comment) {
+    const request = this.#getExistingRequest(requestId);
+    request.setPriority(this.#getExistingUser(officerId), priority, comment);
+    return request;
+  }
+
+  assignTechnician(requestId, officerId, technicianId, comment) {
+    const request = this.#getExistingRequest(requestId);
+    const officer = this.#getExistingUser(officerId);
+    const technician = this.findUserById(technicianId);
+    if (!technician) {
+      throw new Error("Technician not found.");
+    }
+    request.assignTechnician(officer, technician, comment);
+    return request;
+  }
+
+  beginWork(requestId, technicianId, comment) {
+    const request = this.#getExistingRequest(requestId);
+    request.beginWork(this.#getExistingUser(technicianId), comment);
+    return request;
+  }
+
+  addProgressNote(requestId, technicianId, note) {
+    const request = this.#getExistingRequest(requestId);
+    request.addProgressNote(this.#getExistingUser(technicianId), note);
+    return request;
+  }
+
+  resolveRequest(requestId, technicianId, comment) {
+    const request = this.#getExistingRequest(requestId);
+    request.resolve(this.#getExistingUser(technicianId), comment);
+    return request;
+  }
+
+  closeRequest(requestId, officerId, comment) {
+    const request = this.#getExistingRequest(requestId);
+    request.close(this.#getExistingUser(officerId), comment);
+    return request;
+  }
+
+  getRequestHistory(requestId) {
+    return this.#getExistingRequest(requestId).history;
+  }
+
+  getRequestsByTechnician(technicianId) {
+    const id = String(technicianId ?? "").trim().toUpperCase();
+    return this.#requests.filter((request) => request.assignedTechnician?.userId.toUpperCase() === id);
+  }
+
+  // ---------- Filter and sort (Credit) ----------
+  /**
+   * Returns requests matching every criterion given, e.g.
+   * filterRequests({ category: "ICT Support", status: "Assigned" }).
+   * Criteria that are left out are ignored.
+   */
+  filterRequests({ category, status, priority, technicianId } = {}) {
+    return this.#requests.filter(
+      (request) =>
+        (!category || request.category === category) &&
+        (!status || request.status === status) &&
+        (!priority || request.priority === priority) &&
+        (!technicianId || request.isAssignedTo(this.findUserById(technicianId)?.userId))
+    );
+  }
+
+  /**
+   * Returns a NEW sorted array (the original is not changed).
+   * sortBy: "date" (oldest first), "date-desc" (newest first) or
+   *         "priority" (Urgent first; ties broken by the priority score).
+   */
+  sortRequests(requests, sortBy = "date") {
+    const sorted = [...requests];
+    if (sortBy === "date") {
+      sorted.sort((a, b) => a.dateSubmitted.localeCompare(b.dateSubmitted));
+    } else if (sortBy === "date-desc") {
+      sorted.sort((a, b) => b.dateSubmitted.localeCompare(a.dateSubmitted));
+    } else if (sortBy === "priority") {
+      sorted.sort(
+        (a, b) =>
+          PRIORITIES.indexOf(b.priority) - PRIORITIES.indexOf(a.priority) ||
+          b.calculatePriorityScore() - a.calculatePriorityScore()
+      );
+    } else {
+      throw new Error(`Unknown sort option: ${sortBy}.`);
+    }
+    return sorted;
+  }
+
+  /** Returns e.g. { Submitted: 3, Reviewed: 0, ... } - every status is listed, even when 0. */
   getRequestSummaryByStatus() {
     const startingCounts = Object.fromEntries(Object.values(STATUS).map((status) => [status, 0]));
     return this.#requests.reduce((counts, request) => {
