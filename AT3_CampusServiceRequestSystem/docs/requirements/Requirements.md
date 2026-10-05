@@ -86,7 +86,7 @@ DWU has no central system for recording and tracking campus service requests. In
 | ID | Requirement |
 |---|---|
 | FR13 | The system shall store specialised information for Student, Staff, Service Officer and Technician users. |
-| FR14 | The system shall store specialised information for ICT Support, Maintenance and Cleaning requests. |
+| FR14 | The system shall store specialised information for ICT Support, Maintenance, Cleaning and General Campus Service requests. |
 | FR15 | The system shall allow only a Service Officer to review a request, set its priority and assign a Technician. |
 | FR16 | The system shall allow only the assigned Technician to begin work, add progress notes and resolve the request. |
 | FR17 | The system shall allow only a Service Officer to close a *Resolved* request. |

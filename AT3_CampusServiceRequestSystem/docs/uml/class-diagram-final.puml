@@ -1,0 +1,256 @@
+@startuml class-diagram-final
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classBackgroundColor #F7F9FC
+skinparam classBorderColor #1F4E79
+skinparam packageBorderColor #7F8C8D
+skinparam linetype ortho
+hide empty members
+title Campus Service Request Management System - Final Class Diagram
+
+package "Console (src)" {
+  class CampusServiceApp {
+    - manager : ServiceRequestManager
+    + run()
+  }
+}
+
+package "Service layer (src/managers, src/services)" {
+  class ServiceRequestManager {
+    - users : User[]
+    - requests : ServiceRequest[]
+    - auditLog : Object[]
+    - repositories : Object
+    + {static} createWithJsonFiles(dataDir) : ServiceRequestManager
+    + load() : Promise
+    + saveChanges() : Promise
+    + registerUser(user) : User
+    + findUserById(userId) : User
+    + generateRequestId() : String
+    + submitRequest(request) : ServiceRequest
+    + findRequestById(requestId) : ServiceRequest
+    + getRequestsByUser(userId) : ServiceRequest[]
+    + getAllRequests() : ServiceRequest[]
+    + updateRequest(requestId, userId, changes)
+    + cancelRequest(requestId, userId)
+    + searchRequests(searchText) : ServiceRequest[]
+    + reviewRequest(requestId, officerId, comment)
+    + setRequestPriority(requestId, officerId, priority)
+    + assignTechnician(requestId, officerId, technicianId)
+    + beginWork(requestId, technicianId)
+    + addProgressNote(requestId, technicianId, note)
+    + resolveRequest(requestId, technicianId, comment)
+    + closeRequest(requestId, officerId, comment)
+    + getRequestHistory(requestId) : Object[]
+    + getRequestsByTechnician(technicianId) : ServiceRequest[]
+    + filterRequests(criteria) : ServiceRequest[]
+    + sortRequests(requests, sortBy) : ServiceRequest[]
+    + getRequestSummaryByStatus() : Object
+    + checkCanViewReports(viewerId) : User
+    + getManagementReports(viewerId) : Object
+    + getAuditLog(viewerId) : Object[]
+    - audited(actorId, action, requestId, work)
+  }
+  class ReportService {
+    + {static} requestsByStatus(requests) : Object
+    + {static} requestsByCategory(requests) : Object
+    + {static} requestsByPriority(requests) : Object
+    + {static} urgentRequests(requests) : ServiceRequest[]
+    + {static} overdueRequests(requests, now) : Object[]
+    + {static} requestsPerTechnician(requests) : Object
+    + {static} completedByTechnician(requests) : Object
+    + {static} averageResolutionHours(requests) : Number
+    + {static} volumeByLocation(requests) : Object[]
+  }
+}
+
+package "Factories (src/factories)" {
+  class UserFactory {
+    + {static} createUser(userType, common, specialised) : User
+    + {static} createFromData(savedData) : User
+  }
+  class ServiceRequestFactory {
+    + {static} createNew(category, common, specialised) : ServiceRequest
+    + {static} createFromData(savedData, findUser, history) : ServiceRequest
+  }
+}
+
+package "Users (src/models)" {
+  class User {
+    - userId : String
+    - firstName : String
+    - lastName : String
+    - email : String
+    - userType : String
+    + getFullName() : String
+    + validate() : Boolean
+    + displayInfo() : String
+    + toData() : Object
+  }
+  class StudentRequester {
+    - programme : String
+    - yearLevel : Number
+    + validate() : Boolean
+    + displayInfo() : String
+    + toData() : Object
+  }
+  class StaffRequester {
+    - department : String
+    + validate() : Boolean
+    + displayInfo() : String
+    + toData() : Object
+  }
+  class ServiceOfficer {
+    - serviceSection : String
+    + validate() : Boolean
+    + displayInfo() : String
+    + toData() : Object
+  }
+  class Technician {
+    - technicalSpeciality : String
+    + validate() : Boolean
+    + displayInfo() : String
+    + toData() : Object
+  }
+}
+
+package "Requests (src/models)" {
+  abstract class ServiceRequest {
+    - requestId : String
+    - requester : User
+    - title : String
+    - description : String
+    - location : String
+    - category : String
+    - priority : String
+    - status : String
+    - dateSubmitted : String
+    - dateUpdated : String
+    - assignedTechnician : Technician
+    - history : Object[]
+    + validate() : Boolean
+    + validateSpecialisedFields() : Boolean
+    + checkCanModify(userId, action)
+    + updateDetails(changes, userId)
+    + cancelRequest(userId)
+    + review(officer, comment)
+    + setPriority(officer, priority)
+    + assignTechnician(officer, technician)
+    + beginWork(technician)
+    + addProgressNote(technician, note)
+    + resolve(technician, comment)
+    + close(officer, comment)
+    + getBasePriorityScore() : Number
+    + getBaseTargetHours() : Number
+    + {abstract} calculatePriorityScore() : Number
+    + {abstract} getTargetResolutionHours() : Number
+    + {abstract} getRequestSummary() : String
+    + getBaseSummary() : String
+    + toData() : Object
+    - changeStatus(newStatus, action, actor, comment)
+    - checkTransition(newStatus)
+    - restoreState(savedState)
+  }
+  class ICTSupportRequest {
+    - deviceType : String
+    - systemName : String
+    - faultType : String
+    - networkImpact : String
+    + validateSpecialisedFields() : Boolean
+    + calculatePriorityScore() : Number
+    + getTargetResolutionHours() : Number
+    + getRequestSummary() : String
+    + toData() : Object
+  }
+  class MaintenanceRequest {
+    - building : String
+    - roomNumber : String
+    - hazardLevel : String
+    - equipmentAffected : String
+    + validateSpecialisedFields() : Boolean
+    + calculatePriorityScore() : Number
+    + getTargetResolutionHours() : Number
+    + getRequestSummary() : String
+    + toData() : Object
+  }
+  class CleaningRequest {
+    - cleaningArea : String
+    - hygieneRisk : String
+    - serviceType : String
+    - preferredServiceTime : String
+    + validateSpecialisedFields() : Boolean
+    + calculatePriorityScore() : Number
+    + getTargetResolutionHours() : Number
+    + getRequestSummary() : String
+    + toData() : Object
+  }
+  class GeneralServiceRequest {
+    - serviceNeeded : String
+    + validateSpecialisedFields() : Boolean
+    + calculatePriorityScore() : Number
+    + getTargetResolutionHours() : Number
+    + getRequestSummary() : String
+    + toData() : Object
+  }
+}
+
+package "Repositories (src/repositories)" {
+  class FileRepository {
+    - filePath : String
+    - fileName : String
+    - idField : String
+    + loadAll() : Promise
+    + saveAll(records) : Promise
+    + create(record) : Promise
+    + findById(id) : Promise
+    + update(id, changes) : Promise
+  }
+  class UserFileRepository
+  class ServiceRequestFileRepository {
+    + findByRequester(userId) : Promise
+    + findByTechnician(technicianId) : Promise
+  }
+  class RequestHistoryFileRepository {
+    + findByRequest(requestId) : Promise
+  }
+  class AuditFileRepository {
+    + findByRequest(requestId) : Promise
+  }
+}
+
+User <|-- StudentRequester
+User <|-- StaffRequester
+User <|-- ServiceOfficer
+User <|-- Technician
+
+ServiceRequest <|-- ICTSupportRequest
+ServiceRequest <|-- MaintenanceRequest
+ServiceRequest <|-- CleaningRequest
+ServiceRequest <|-- GeneralServiceRequest
+
+FileRepository <|-- UserFileRepository
+FileRepository <|-- ServiceRequestFileRepository
+FileRepository <|-- RequestHistoryFileRepository
+FileRepository <|-- AuditFileRepository
+
+CampusServiceApp --> ServiceRequestManager : uses
+CampusServiceApp ..> UserFactory : creates new users
+CampusServiceApp ..> ServiceRequestFactory : creates new requests
+
+ServiceRequestManager "1" o-- "*" User : manages
+ServiceRequestManager "1" o-- "*" ServiceRequest : manages
+ServiceRequestManager "1" *-- "4" FileRepository : loads/saves through
+ServiceRequestManager ..> UserFactory : restores users
+ServiceRequestManager ..> ServiceRequestFactory : restores requests
+ServiceRequestManager ..> ReportService : uses
+
+ServiceRequest "*" --> "1" User : requester
+ServiceRequest "*" --> "0..1" Technician : assignedTechnician
+
+note bottom of ServiceRequest
+  Abstract-style: the three {abstract}
+  methods throw an error unless a
+  subclass overrides them.
+end note
+@enduml

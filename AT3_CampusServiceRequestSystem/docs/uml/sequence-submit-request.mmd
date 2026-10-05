@@ -2,30 +2,41 @@ sequenceDiagram
     actor R as Requester
     participant App as CampusServiceApp
     participant M as ServiceRequestManager
-    participant SR as ServiceRequest
+    participant F as ServiceRequestFactory
+    participant SR as ICTSupportRequest (subclass)
+    participant Repo as Repositories
     R->>App: Choose "2. Submit Service Request"
     App->>R: Ask for user ID
-    R->>App: Enter user ID
-    App->>M: findUserById(userId)
+    R->>App: DWU2026001
+    App->>M: findUserById("DWU2026001")
     alt user not found
         M-->>App: undefined
-        App-->>R: "Error: User not found."
+        App-->>R: "Error: User not found. Please register first (option 1)."
     else user found
-        M-->>App: User
-        App->>R: Ask for title, description, location, category, priority
-        R->>App: Enter request details
+        M-->>App: StudentRequester
+        App->>R: Ask for category, title, description, location, priority
+        R->>App: ICT Support, details...
+        App->>R: Ask for ICT details (device, system, fault type, network impact)
+        R->>App: Laptop, DWU-Student Wi-Fi, Network, Building
         App->>M: generateRequestId()
-        M-->>App: "REQ001"
-        App->>SR: new ServiceRequest(data)
+        M-->>App: "REQ010"
+        App->>F: createNew("ICT Support", commonData, ictDetails)
+        F->>SR: new ICTSupportRequest(commonData, ictDetails)
+        SR->>SR: super(commonData) validates common fields, status = Submitted
+        SR->>SR: setters validate the ICT fields, first history entry added
         alt invalid details
             SR-->>App: throws Error
-            App-->>R: "Error: Unsupported category." (example)
+            App-->>R: "Error: Request title is required." (example)
         else valid
-            SR-->>App: request (status = Submitted)
+            SR-->>F: request
+            F-->>App: request
             App->>M: submitRequest(request)
-            M->>M: check duplicate request ID
-            M->>M: requests.push(request)
+            M->>M: validate, check requester registered, check duplicate ID
+            M->>M: requests.push(request), add audit entry
             M-->>App: request
-            App-->>R: "Request REQ001 submitted."
+            App-->>R: "Request REQ010 submitted successfully." + summary
+            App->>M: saveChanges()
+            M->>Repo: saveAll(toData() records) for the four JSON files
+            Repo-->>M: saved
         end
     end

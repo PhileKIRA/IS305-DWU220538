@@ -89,7 +89,12 @@ AT3_CampusServiceRequestSystem/
 ├── tests/                           # Automated tests (node:test), *.test.js
 ├── docs/
 │   ├── requirements/                # Requirements document
-│   └── uml/                         # Use case, class and sequence diagrams
+│   ├── uml/                         # Use case, class and sequence diagrams
+│   ├── technical-documentation/     # Technical documentation
+│   ├── user-guide/                  # User guide
+│   ├── test-report/                 # Test report
+│   ├── screenshots/                 # Console screenshots
+│   └── AI_Use_Declaration.md
 ├── package.json
 └── README.md
 ```
@@ -210,6 +215,18 @@ The tests cover object construction and validation, duplicate IDs, role permissi
 - A proper database for many simultaneous users (not allowed for this assessment).
 - Notifications to requesters when their request changes status.
 
+## Documentation
+
+| Document | Location |
+|---|---|
+| Requirements document | `docs/requirements/Requirements.md` |
+| UML diagrams and class relationships | `docs/uml/` (see `docs/uml/README.md`) |
+| Technical documentation | `docs/technical-documentation/TechnicalDocumentation.md` |
+| User guide | `docs/user-guide/UserGuide.md` |
+| Test report | `docs/test-report/TestReport.md` |
+| Console screenshots | `docs/screenshots/` |
+| AI Use Declaration | `docs/AI_Use_Declaration.md` |
+
 ## AI Use Declaration
 
-_(To be completed honestly before submission.)_
+AI (Claude, by Anthropic) was used extensively as a development and learning assistant: to analyse the specification, generate the source code, tests and UML diagrams, and draft the documentation, one milestone at a time. I set up the repository, made all commits, ran and checked the application and tests on my own computer, took the screenshots, and studied the code so that I can explain and modify it. I am responsible for the submitted work. The full declaration is in `docs/AI_Use_Declaration.md`.
