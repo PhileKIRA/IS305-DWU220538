@@ -105,13 +105,26 @@ class ServiceRequest {
    * Only the requester may update, and only while the request is Submitted.
    * All new values are checked FIRST; nothing changes unless every value is valid.
    */
-  updateDetails(changes, userId) {
+  /**
+   * The one place that decides whether a user may change this request.
+   * action is "update" or "cancel". Throws a clear error if not allowed.
+   * The console calls this early so users are not asked for details first.
+   */
+  checkCanModify(userId, action) {
     if (!this.isOwnedBy(userId)) {
-      throw new Error("Only the requester can update this request.");
+      throw new Error(`Only the requester can ${action} this request.`);
+    }
+    if (action === "cancel" && this.#status === STATUS.CANCELLED) {
+      throw new Error("This request is already cancelled.");
     }
     if (this.#status !== STATUS.SUBMITTED) {
-      throw new Error(`Only Submitted requests can be updated (current status: ${this.#status}).`);
+      const verb = action === "cancel" ? "cancelled" : "updated";
+      throw new Error(`Only Submitted requests can be ${verb} (current status: ${this.#status}).`);
     }
+  }
+
+  updateDetails(changes, userId) {
+    this.checkCanModify(userId, "update");
 
     const allowedFields = ["title", "description", "location", "category", "priority"];
     const fields = Object.keys(changes ?? {});
@@ -144,15 +157,7 @@ class ServiceRequest {
   }
 
   cancelRequest(userId) {
-    if (!this.isOwnedBy(userId)) {
-      throw new Error("Only the requester can cancel this request.");
-    }
-    if (this.#status === STATUS.CANCELLED) {
-      throw new Error("This request is already cancelled.");
-    }
-    if (this.#status !== STATUS.SUBMITTED) {
-      throw new Error(`Only Submitted requests can be cancelled (current status: ${this.#status}).`);
-    }
+    this.checkCanModify(userId, "cancel");
     this.#status = STATUS.CANCELLED;
     this.#touch();
   }
