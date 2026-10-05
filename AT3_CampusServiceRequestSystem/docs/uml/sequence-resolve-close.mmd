@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor T as Technician
+    actor O as Service Officer
+    participant App as CampusServiceApp
+    participant M as ServiceRequestManager
+    participant SR as ServiceRequest (e.g. ICTSupportRequest)
+    T->>App: "11. Technician Menu" → "Resolve request" (TECH001, REQ001, comment)
+    App->>M: resolveRequest("REQ001", "TECH001", comment)
+    M->>SR: resolve(technician, comment)
+    SR->>SR: is technician the assigned Technician?
+    SR->>SR: private checkTransition(Resolved) — is status In Progress?
+    alt not allowed
+        SR-->>App: throws "Only the assigned Technician can resolve this request." / "Invalid status change"
+        App-->>T: Error message
+    else allowed
+        SR->>SR: private changeStatus(Resolved) → add history entry
+        SR-->>App: request
+        App-->>T: "Done. REQ001 is now Resolved."
+    end
+    O->>App: "10. Service Officer Menu" → "Verify and close" (OFF001, REQ001, comment)
+    App->>M: closeRequest("REQ001", "OFF001", comment)
+    M->>SR: close(officer, comment)
+    SR->>SR: officer instanceof ServiceOfficer?
+    SR->>SR: private checkTransition(Closed) — is status Resolved?
+    alt not allowed
+        SR-->>App: throws "Only a Service Officer can close requests." / "Invalid status change"
+        App-->>O: Error message
+    else allowed
+        SR->>SR: private changeStatus(Closed) → add history entry
+        SR-->>App: request
+        App-->>O: "Done. REQ001 is now Closed."
+    end

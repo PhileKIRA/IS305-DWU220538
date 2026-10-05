@@ -12,7 +12,7 @@ A Node.js console application that records, assigns, processes and monitors camp
 ## Achievement Components Attempted
 
 - [x] **Pass** – core service request system *(complete)*
-- [ ] **Credit** – specialised requests and role workflows *(in progress: user and request inheritance complete)*
+- [x] **Credit** – specialised requests and role workflows *(complete)*
 - [ ] **Distinction** – polymorphism, JSON storage and reporting
 
 ## Features Completed (Pass)
@@ -26,7 +26,7 @@ A Node.js console application that records, assigns, processes and monitors camp
 - Request summary by status
 - Clear error messages; invalid input never crashes the menu
 
-## Features Completed (Credit – in progress)
+## Features Completed (Credit)
 
 - User inheritance: `StudentRequester`, `StaffRequester`, `ServiceOfficer`, `Technician` extend `User` and call `super()`
 - Request inheritance: `ICTSupportRequest`, `MaintenanceRequest`, `CleaningRequest`, `GeneralServiceRequest` extend `ServiceRequest` and call `super(commonRequestData)`
@@ -34,6 +34,11 @@ A Node.js console application that records, assigns, processes and monitors camp
 - Overridden `getRequestSummary()`, `validateSpecialisedFields()`, `validate()` and `displayInfo()`
 - `UserFactory` and `ServiceRequestFactory` create the correct subclass from the console choices
 - User type and request category are fixed once an object is created
+- Controlled workflow: Submitted → Reviewed → Assigned → In Progress → Resolved → Closed (Cancelled is final); invalid transitions are rejected
+- Role permissions: only Service Officers review, set priority, assign Technicians and close; only the assigned Technician begins work, adds progress notes and resolves
+- Overridden `calculatePriorityScore()` and `getTargetResolutionHours()` (e.g. campus-wide network outage = 2-hour target)
+- Filter by category, status, priority and assigned Technician; sort by date submitted or priority
+- Every request keeps a history of approved workflow actions (previous/new status, action, actor ID and role, comment, time)
 
 ## Project Folder Structure
 
@@ -103,6 +108,18 @@ npm test
 5. Option **8** – search `wi-fi` → `REQ001` found.
 6. Option **7** – cancel `REQ001` as `DWU2026001` → status *Cancelled*. Cancelling again → *Error: This request is already cancelled.*
 7. Option **9** – summary shows Submitted 0, Cancelled 1.
+
+## Sample User Scenario (Credit workflow)
+
+1. Register a Student (`DWU2026001`), a Service Officer (`OFF001`) and two Technicians (`TECH001`, `TECH002`).
+2. As the student, submit an ICT Support request → `REQ001` (Submitted).
+3. Option **10** as `DWU2026001` → review → *Error: Only a Service Officer can review requests.*
+4. Option **10** as `OFF001` → close → *Error: Invalid status change: Submitted → Closed is not allowed.*
+5. Option **10** as `OFF001` → review, set priority to High, assign `TECH001`.
+6. Option **11** as `TECH002` → begin work → *Error: Only the assigned Technician can start work on this request.*
+7. Option **11** as `TECH001` → begin work, add a progress note, resolve.
+8. Option **10** as `OFF001` → verify and close → `REQ001` is Closed.
+9. Option **13** → history shows every step with who did it and when.
 
 ## Known Limitations (current stage)
 

@@ -5,8 +5,8 @@
 | Use case diagram | `use-case.puml` | `use-case.png` | Complete |
 | Class diagram | `class-diagram-initial.mmd` | `class-diagram-initial.png` | **Initial (Pass)** – will be replaced by the final class diagram after the Credit and Distinction stages |
 | Sequence: submit request | `sequence-submit-request.mmd` | `sequence-submit-request.png` | Complete for Pass |
-| Sequence: assign Technician | – | – | Added in the Credit stage |
-| Sequence: resolve and close request | – | – | Added in the Credit stage |
+| Sequence: assign Technician | `sequence-assign-technician.mmd` | `sequence-assign-technician.png` | Complete (Credit) |
+| Sequence: resolve and close request | `sequence-resolve-close.mmd` | `sequence-resolve-close.png` | Complete (Credit) |
 
 `.mmd` files are Mermaid and `.puml` files are PlantUML, so every diagram can be regenerated from its source.
 

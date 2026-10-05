@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor O as Service Officer
+    participant App as CampusServiceApp
+    participant M as ServiceRequestManager
+    participant SR as ServiceRequest (e.g. ICTSupportRequest)
+    O->>App: Choose "10. Service Officer Menu" → "Assign a Technician"
+    App->>O: Ask for officer ID, request ID, Technician ID
+    O->>App: OFF001, REQ001, TECH001
+    App->>M: assignTechnician("REQ001", "OFF001", "TECH001")
+    M->>M: findRequestById / findUserById (officer, technician)
+    alt request, officer or technician not found
+        M-->>App: throws "Request not found." / "Technician not found."
+        App-->>O: Error message
+    else all found
+        M->>SR: assignTechnician(officer, technician)
+        SR->>SR: officer instanceof ServiceOfficer?
+        SR->>SR: technician instanceof Technician?
+        SR->>SR: private checkTransition(Assigned) — is current status Reviewed?
+        alt not allowed
+            SR-->>M: throws e.g. "Only a Service Officer can assign a Technician."
+            M-->>App: error
+            App-->>O: Error message (request unchanged)
+        else allowed
+            SR->>SR: set private assignedTechnician = technician
+            SR->>SR: private changeStatus(Assigned) → add history entry
+            SR-->>M: done
+            M-->>App: request
+            App-->>O: "Done. REQ001 is now Assigned."
+        end
+    end
