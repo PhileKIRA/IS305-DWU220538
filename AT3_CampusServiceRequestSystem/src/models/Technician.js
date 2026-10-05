@@ -28,6 +28,13 @@ class Technician extends User {
   displayInfo() {
     return `${super.displayInfo()}\nSpeciality: ${this.#technicalSpeciality}`;
   }
+
+  toData() {
+    return {
+      ...super.toData(),
+      technicalSpeciality: this.#technicalSpeciality,
+    };
+  }
 }
 
 module.exports = Technician;

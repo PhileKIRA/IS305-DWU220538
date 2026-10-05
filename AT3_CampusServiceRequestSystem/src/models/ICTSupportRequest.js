@@ -66,6 +66,17 @@ class ICTSupportRequest extends ServiceRequest {
       `Network    : ${this.#networkImpact} impact`,
     ].join("\n");
   }
+
+  /** Adds this type's own fields to the common data saved by the base class. */
+  toData() {
+    return {
+      ...super.toData(),
+      deviceType: this.#deviceType,
+      systemName: this.#systemName,
+      faultType: this.#faultType,
+      networkImpact: this.#networkImpact,
+    };
+  }
 }
 
 module.exports = ICTSupportRequest;

@@ -66,6 +66,17 @@ class CleaningRequest extends ServiceRequest {
       `Preferred  : ${this.#preferredServiceTime}`,
     ].join("\n");
   }
+
+  /** Adds this type's own fields to the common data saved by the base class. */
+  toData() {
+    return {
+      ...super.toData(),
+      cleaningArea: this.#cleaningArea,
+      hygieneRisk: this.#hygieneRisk,
+      serviceType: this.#serviceType,
+      preferredServiceTime: this.#preferredServiceTime,
+    };
+  }
 }
 
 module.exports = CleaningRequest;

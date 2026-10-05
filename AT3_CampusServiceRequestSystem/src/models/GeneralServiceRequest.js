@@ -4,8 +4,8 @@ const { requireText } = require("../validation");
 /**
  * GeneralServiceRequest - anything that is not ICT, maintenance or cleaning
  * (e.g. furniture moving, signage, event set-up).
- * Needed so that the "General Campus Service" category has its own class once
- * ServiceRequest becomes an abstract-style base class (Distinction stage).
+ * Needed because ServiceRequest is an abstract-style base class: every category
+ * must have its own subclass that implements the required methods.
  */
 class GeneralServiceRequest extends ServiceRequest {
   #serviceNeeded;
@@ -29,12 +29,29 @@ class GeneralServiceRequest extends ServiceRequest {
     return true;
   }
 
+  /** General requests have no extra risk factor, so they use the priority level only. */
+  calculatePriorityScore() {
+    return this.getBasePriorityScore();
+  }
+
+  getTargetResolutionHours() {
+    return this.getBaseTargetHours();
+  }
+
   getRequestSummary() {
     return [
       this.getBaseSummary(),
       "--- General Service Details ---",
       `Service    : ${this.#serviceNeeded}`,
     ].join("\n");
+  }
+
+  /** Adds this type's own fields to the common data saved by the base class. */
+  toData() {
+    return {
+      ...super.toData(),
+      serviceNeeded: this.#serviceNeeded,
+    };
   }
 }
 

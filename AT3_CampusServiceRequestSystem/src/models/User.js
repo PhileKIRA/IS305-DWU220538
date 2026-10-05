@@ -98,6 +98,20 @@ class User {
     ].join("\n");
   }
 
+  /**
+   * Plain data for saving to users.json. JSON.stringify() cannot see private
+   * fields, so each class lists what must be saved. Subclasses add their fields.
+   */
+  toData() {
+    return {
+      userId: this.#userId,
+      firstName: this.#firstName,
+      lastName: this.#lastName,
+      email: this.#email,
+      userType: this.#userType,
+    };
+  }
+
   // Private static helper: trims text and rejects empty values.
   static #requireText(value, fieldName) {
     if (typeof value !== "string" || value.trim() === "") {

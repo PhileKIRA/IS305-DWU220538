@@ -64,6 +64,17 @@ class MaintenanceRequest extends ServiceRequest {
       `Equipment  : ${this.#equipmentAffected}`,
     ].join("\n");
   }
+
+  /** Adds this type's own fields to the common data saved by the base class. */
+  toData() {
+    return {
+      ...super.toData(),
+      building: this.#building,
+      roomNumber: this.#roomNumber,
+      hazardLevel: this.#hazardLevel,
+      equipmentAffected: this.#equipmentAffected,
+    };
+  }
 }
 
 module.exports = MaintenanceRequest;

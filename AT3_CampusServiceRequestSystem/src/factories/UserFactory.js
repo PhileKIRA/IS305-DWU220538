@@ -5,7 +5,8 @@ const ServiceOfficer = require("../models/ServiceOfficer");
 const Technician = require("../models/Technician");
 
 /**
- * UserFactory - creates the correct User subclass for a user type.
+ * UserFactory - creates the correct User subclass for a user type
+ * (for new users and for users loaded from JSON).
  * The console only says "make me a Technician"; the factory knows which class
  * and which constructor arguments that needs.
  */
@@ -13,7 +14,7 @@ class UserFactory {
   /**
    * @param {string} userType   - one of USER_TYPES
    * @param {object} common     - { userId, firstName, lastName, email }
-   * @param {object} specialised - fields for that type (see SPECIALISED_FIELDS)
+   * @param {object} specialised - extra fields for that type (e.g. programme, yearLevel)
    */
   static createUser(userType, common, specialised = {}) {
     const { userId, firstName, lastName, email } = common;
@@ -32,6 +33,14 @@ class UserFactory {
       default:
         throw new Error(`Unknown user type: ${userType}.`);
     }
+  }
+
+  /**
+   * Rebuilds a user loaded from users.json as the correct subclass, so role
+   * checks such as "instanceof ServiceOfficer" still work after a restart.
+   */
+  static createFromData(savedData) {
+    return UserFactory.createUser(savedData?.userType, savedData ?? {}, savedData ?? {});
   }
 }
 

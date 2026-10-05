@@ -24,7 +24,8 @@ test("T04 - valid request submission is stored with Submitted status", () => {
   assert.strictEqual(request.status, "Submitted");
   assert.strictEqual(request.requester.userId, "DWU2026001");
   assert.strictEqual(request.validate(), true);
-  assert.match(request.getRequestSummary(), /Unable to access campus Wi-Fi/);
+  assert.strictEqual(request.title, "Unable to access campus Wi-Fi");
+  // (Summaries are tested on the subclasses: ServiceRequest itself is abstract-style.)
 });
 
 test("T05 - invalid request category, priority, title and description are rejected", () => {

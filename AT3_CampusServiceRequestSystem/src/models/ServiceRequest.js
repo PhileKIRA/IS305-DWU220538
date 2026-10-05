@@ -13,8 +13,11 @@ const { requireText } = require("../validation");
 
 /**
  * ServiceRequest - one campus service problem reported by a requester.
- * Base class for ICTSupportRequest, MaintenanceRequest, CleaningRequest and
- * GeneralServiceRequest.
+ *
+ * ABSTRACT-STYLE BASE CLASS: it holds everything all requests share, but it
+ * does not know how to score, time or summarise a request. Those three
+ * methods throw an error here and MUST be implemented by each subclass
+ * (ICTSupportRequest, MaintenanceRequest, CleaningRequest, GeneralServiceRequest).
  *
  * Encapsulation: all fields are private. Status can NOT be set from outside;
  * it only changes through workflow methods (review, assignTechnician, ...),
@@ -41,6 +44,11 @@ class ServiceRequest {
    * @param {object} data - common request data:
    *   { requestId, requester, title, description, location, category, priority }
    * Subclasses call super(commonRequestData) and supply their own category.
+   *
+   * data.savedState is only used by ServiceRequestFactory.createFromData() when a
+   * request is loaded from JSON: { status, dateSubmitted, dateUpdated,
+   * assignedTechnician, history }. It is validated, and it can only be used
+   * while creating a NEW object - an existing request's status still cannot be changed.
    */
   constructor(data = {}) {
     if (!(data.requester instanceof User)) {
@@ -60,10 +68,14 @@ class ServiceRequest {
     }
     this.#category = data.category;
 
-    this.#status = STATUS.SUBMITTED; // default status required by the spec
-    this.#dateSubmitted = new Date().toISOString();
-    this.#dateUpdated = this.#dateSubmitted;
-    this.#addHistory(null, STATUS.SUBMITTED, "Submit request", this.#requester, "Request submitted");
+    if (data.savedState) {
+      this.#restoreState(data.savedState);
+    } else {
+      this.#status = STATUS.SUBMITTED; // default status required by the spec
+      this.#dateSubmitted = new Date().toISOString();
+      this.#dateUpdated = this.#dateSubmitted;
+      this.#addHistory(null, STATUS.SUBMITTED, "Submit request", this.#requester, "Request submitted");
+    }
   }
 
   // ---------- Getters ----------
@@ -248,7 +260,7 @@ class ServiceRequest {
     this.#changeStatus(STATUS.RESOLVED, "Resolve request", technician, comment);
   }
 
-  // ---------- Priority and target time (overridden by subclasses) ----------
+  // ---------- Priority and target time ----------
   /** Points for the priority level only. Subclasses add points for their own risks. */
   getBasePriorityScore() {
     return PRIORITY_POINTS[this.#priority];
@@ -259,12 +271,17 @@ class ServiceRequest {
     return BASE_TARGET_HOURS[this.#priority];
   }
 
+  // ---------- Abstract-style methods: every subclass MUST override these ----------
   calculatePriorityScore() {
-    return this.getBasePriorityScore();
+    throw new Error(`calculatePriorityScore() must be implemented by a subclass (${this.requestType}).`);
   }
 
   getTargetResolutionHours() {
-    return this.getBaseTargetHours();
+    throw new Error(`getTargetResolutionHours() must be implemented by a subclass (${this.requestType}).`);
+  }
+
+  getRequestSummary() {
+    throw new Error(`getRequestSummary() must be implemented by a subclass (${this.requestType}).`);
   }
 
   // ---------- Summaries ----------
@@ -289,11 +306,64 @@ class ServiceRequest {
     ].join("\n");
   }
 
-  getRequestSummary() {
-    return this.getBaseSummary();
+  // ---------- Saving (Distinction) ----------
+  /**
+   * Plain data for saving to serviceRequests.json. Private fields are not
+   * included by JSON.stringify(), so each class lists its own fields here.
+   * Subclasses override this and add their specialised fields.
+   * The history is saved separately in requestHistory.json.
+   */
+  toData() {
+    return {
+      requestId: this.#requestId,
+      requestType: this.requestType,
+      requesterId: this.#requester.userId,
+      title: this.#title,
+      description: this.#description,
+      location: this.#location,
+      category: this.#category,
+      priority: this.#priority,
+      status: this.#status,
+      assignedTechnicianId: this.#assignedTechnician ? this.#assignedTechnician.userId : null,
+      dateSubmitted: this.#dateSubmitted,
+      dateUpdated: this.#dateUpdated,
+    };
   }
 
   // ---------- Private helpers ----------
+  /** Puts a loaded request back into the state it was saved in (checked first). */
+  #restoreState({ status, dateSubmitted, dateUpdated, assignedTechnician = null, history = [] }) {
+    if (!Object.values(STATUS).includes(status)) {
+      throw new Error(`Saved request ${this.#requestId} has an invalid status: ${status}.`);
+    }
+    if (assignedTechnician !== null && !(assignedTechnician instanceof Technician)) {
+      throw new Error(`Saved request ${this.#requestId} is assigned to a user who is not a Technician.`);
+    }
+    const needsTechnician = [STATUS.ASSIGNED, STATUS.IN_PROGRESS, STATUS.RESOLVED, STATUS.CLOSED].includes(status);
+    if (needsTechnician && assignedTechnician === null) {
+      throw new Error(`Saved request ${this.#requestId} is ${status} but has no assigned Technician.`);
+    }
+    if (Number.isNaN(Date.parse(dateSubmitted)) || Number.isNaN(Date.parse(dateUpdated))) {
+      throw new Error(`Saved request ${this.#requestId} has an invalid date.`);
+    }
+    if (!Array.isArray(history)) {
+      throw new Error(`Saved request ${this.#requestId} has an invalid history.`);
+    }
+    this.#status = status;
+    this.#dateSubmitted = dateSubmitted;
+    this.#dateUpdated = dateUpdated;
+    this.#assignedTechnician = assignedTechnician;
+    this.#history = history.map((entry) => ({
+      previousStatus: entry.previousStatus ?? null,
+      newStatus: entry.newStatus,
+      action: entry.action,
+      actorId: entry.actorId,
+      actorRole: entry.actorRole,
+      comment: entry.comment,
+      timestamp: entry.timestamp,
+    }));
+  }
+
   /** Throws if moving from the current status to newStatus is not allowed. */
   #checkTransition(newStatus) {
     const allowed = VALID_TRANSITIONS[this.#status] ?? [];
